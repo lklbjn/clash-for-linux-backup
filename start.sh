@@ -187,15 +187,39 @@ echo ''
 
 # 添加环境变量(root权限)
 cat>/etc/profile.d/clash.sh<<EOF
+# 检查系统类型
+check_system() {
+    if [ -f /etc/debian_version ]; then
+        SYSTEM="debian"
+    elif [ -f /etc/redhat-release ]; then
+        SYSTEM="redhat"
+    else
+        SYSTEM="unknown"
+    fi
+}
 # 开启系统代理
 proxy_on() {
-	export http_proxy=http://127.0.0.1:7890
-	export https_proxy=http://127.0.0.1:7890
-	export no_proxy=127.0.0.1,localhost
-    	export HTTP_PROXY=http://127.0.0.1:7890
-    	export HTTPS_PROXY=http://127.0.0.1:7890
- 	export NO_PROXY=127.0.0.1,localhost
-	echo -e "\033[32m[√] 已开启代理\033[0m"
+    export http_proxy=http://127.0.0.1:7890
+    export https_proxy=http://127.0.0.1:7890
+    export no_proxy=127.0.0.1,localhost
+    export HTTP_PROXY=http://127.0.0.1:7890
+    export HTTPS_PROXY=http://127.0.0.1:7890
+    export NO_PROXY=127.0.0.1,localhost
+
+    # 为 APT 或 YUM 配置代理
+    if [ "$SYSTEM" = "debian" ]; then
+        echo 'Acquire::http::Proxy "http://127.0.0.1:7890";' | sudo tee /etc/apt/apt.conf.d/proxy.conf > /dev/null
+        echo 'Acquire::https::Proxy "http://127.0.0.1:7890";' | sudo tee -a /etc/apt/apt.conf.d/proxy.conf > /dev/null
+    elif [ "$SYSTEM" = "redhat" ]; then
+        sudo tee /etc/yum.conf > /dev/null <<EOL
+        proxy=http://127..01:789
+        EOL
+    fi 
+
+    # 为 Git 配置代理 
+    git config --global http.proxy http://127..01:789 
+    git config --global https.proxy http://127..01:789 
+    echo -e "\033[32m[√] 已开启代理\033[0m"
 }
 
 # 关闭系统代理
@@ -206,6 +230,16 @@ proxy_off(){
   	unset HTTP_PROXY
 	unset HTTPS_PROXY
 	unset NO_PROXY
+
+	# 删除 APT 或 YUM 代理配置文件 
+	if [ "$SYSTEM" = "debian" ]; then 
+		sudo rm -f /etc/apt/apt.conf.d/proxy.conf 
+	elif [ "$SYSTEM" = "redhat" ]; then 
+		sudo sed -i '/^proxy=/d' /etc/yum.conf 
+	fi 
+	# 取消 Git 代理配置 
+	git config --global --unset http.proxy 
+	git config --global --unset https.proxy
 	echo -e "\033[31m[×] 已关闭代理\033[0m"
 }
 EOF
