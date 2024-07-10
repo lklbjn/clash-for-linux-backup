@@ -207,13 +207,11 @@ proxy_on() {
     export NO_PROXY=127.0.0.1,localhost
 
     # 为 APT 或 YUM 配置代理
-    if [ "$SYSTEM" = "debian" ]; then
+    if [ "\$SYSTEM" = "debian" ]; then
         echo 'Acquire::http::Proxy "http://127.0.0.1:7890";' | sudo tee /etc/apt/apt.conf.d/proxy.conf > /dev/null
         echo 'Acquire::https::Proxy "http://127.0.0.1:7890";' | sudo tee -a /etc/apt/apt.conf.d/proxy.conf > /dev/null
-    elif [ "$SYSTEM" = "redhat" ]; then
-        sudo tee /etc/yum.conf > /dev/null <<EOL
-        proxy=http://127..01:789
-        EOL
+    elif [ "\$SYSTEM" = "redhat" ]; then
+        echo 'proxy=http://127..01:789' | sudo tee -a /etc/yum.conf > /dev/null 
     fi 
 
     # 为 Git 配置代理 
@@ -232,9 +230,9 @@ proxy_off(){
 	unset NO_PROXY
 
 	# 删除 APT 或 YUM 代理配置文件 
-	if [ "$SYSTEM" = "debian" ]; then 
+	if [ "\$SYSTEM" = "debian" ]; then 
 		sudo rm -f /etc/apt/apt.conf.d/proxy.conf 
-	elif [ "$SYSTEM" = "redhat" ]; then 
+	elif [ "\$SYSTEM" = "redhat" ]; then 
 		sudo sed -i '/^proxy=/d' /etc/yum.conf 
 	fi 
 	# 取消 Git 代理配置 
