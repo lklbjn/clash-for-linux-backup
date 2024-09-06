@@ -197,6 +197,8 @@ check_system() {
         SYSTEM="unknown"
     fi
 }
+check_system
+echo "当前系统为: $SYSTEM"
 # 开启系统代理
 proxy_on() {
     export http_proxy=http://127.0.0.1:7890
